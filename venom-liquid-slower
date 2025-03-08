@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مایع سفید پخش‌شده با سرعت کمتر</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #333; /* پس‌زمینه خاکستری تیره */
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    
+    class Particle {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.size = Math.random() * 3 + 1;
+        this.speedX = Math.random() * 0.8 - 0.4; /* سرعت کمتر */
+        this.speedY = Math.random() * 0.8 - 0.4; /* سرعت کمتر */
+      }
+
+      update() {
+        let dx = mouse.x - this.x;
+        let dy = mouse.y - this.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        let forceX = dx / distance;
+        let forceY = dy / distance;
+        let maxDistance = mouse.radius;
+        let force = (maxDistance - distance) / maxDistance;
+
+        if (distance < mouse.radius) {
+          this.x += forceX * force * 1.5; /* تعامل آروم‌تر با موس */
+          this.y += forceY * force * 1.5;
+        }
+
+        // حرکت آزاد در کل صفحه
+        this.x += this.speedX;
+        this.y += this.speedY;
+
+        // برگشت از لبه‌ها
+        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+      }
+
+      draw() {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'; /* سفید با شفافیت */
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    // ایجاد ذرات
+    const particles = [];
+    const particleCount = 600;
+    for (let i = 0; i < particleCount; i++) {
+      let x = Math.random() * canvas.width;
+      let y = Math.random() * canvas.height;
+      particles.push(new Particle(x, y));
+    }
+
+    // مدیریت موس
+    const mouse = {
+      x: null,
+      y: null,
+      radius: 120
+    };
+
+    canvas.addEventListener('mousemove', (e) => {
+      mouse.x = e.x;
+      mouse.y = e.y;
+    });
+
+    // اتصال ذرات
+    function connectParticles() {
+      for (let a = 0; a < particles.length; a++) {
+        for (let b = a; b < particles.length; b++) {
+          let dx = particles[a].x - particles[b].x;
+          let dy = particles[a].y - particles[b].y;
+          let distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < 80) {
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 - distance / 80})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(particles[a].x, particles[a].y);
+            ctx.lineTo(particles[b].x, particles[b].y);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    // انیمیشن
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      connectParticles();
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // تنظیم اندازه با تغییر پنجره
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>
